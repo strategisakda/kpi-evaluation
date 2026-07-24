@@ -388,7 +388,7 @@ function submitRowHtml(r) {
     evidenceHtml = (r.evidenceFileName || r.evidenceLink)
       ? '<div class="evidence-file">' +
         (r.evidenceFileName
-          ? '<a href="javascript:void(0)" data-action="view-evidence" data-kpi-id="' + r.kpiId + '">' + escapeHtml(r.evidenceFileName) + '</a>'
+          ? '<button type="button" class="btn btn-link p-0 border-0 align-baseline" data-action="view-evidence" data-kpi-id="' + r.kpiId + '">' + escapeHtml(r.evidenceFileName) + '</button>'
           : '<a href="' + escapeAttr(r.evidenceLink) + '" target="_blank" rel="noopener">เปิดลิงก์</a>') +
         aiSelfCheckBtn +
         '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-evidence" data-action="delete-evidence" data-kpi-id="' + r.kpiId + '" title="ลบไฟล์นี้"><i class="bi bi-trash"></i></button>' +
@@ -540,7 +540,7 @@ function reviewRowHtml(r) {
     var aiBtnCls = aiChecked ? 'btn-info' : 'btn-outline-info';
     var aiBtnTitle = aiChecked ? ('ตรวจแล้ว: ' + r.aiConsistency + ' (คลิกดูผลที่บันทึกไว้)') : 'ให้ AI ช่วยดูหลักฐานเบื้องต้น (ไม่ตัดสินคะแนน)';
     evidenceHtml = (r.evidenceFileName
-      ? '<a href="javascript:void(0)" data-action="view-evidence" data-district="' + escapeAttr(r.district) + '">' + escapeHtml(r.evidenceFileName) + '</a>'
+      ? '<button type="button" class="btn btn-link p-0 border-0 align-baseline" data-action="view-evidence" data-district="' + escapeAttr(r.district) + '">' + escapeHtml(r.evidenceFileName) + '</button>'
       : '<a href="' + escapeAttr(r.evidenceLink) + '" target="_blank" rel="noopener">เปิดลิงก์</a>') +
       '<button type="button" class="btn btn-sm ' + aiBtnCls + ' py-0 px-1 ms-1" data-action="ai-analyze" data-district="' + r.district + '" title="' + escapeAttr(aiBtnTitle) + '"><i class="bi bi-robot"></i></button>';
   } else if (!currentReviewRequiresEvidence) {
