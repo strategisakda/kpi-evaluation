@@ -416,10 +416,15 @@ function submitRowHtml(r) {
 }
 
 async function openEvidence(district, kpiId) {
+  // เปิดแท็บเปล่าทันทีตอนคลิก (ก่อน await) กัน popup blocker — เบราว์เซอร์ส่วนใหญ่บล็อก
+  // window.open ที่เกิดขึ้นหลัง await เพราะไม่ถือว่าเป็นผลจากการคลิกโดยตรงแล้ว
+  var newTab = window.open('', '_blank');
   try {
     const data = await apiGet('/api/evidence/url?district=' + encodeURIComponent(district) + '&kpi_id=' + encodeURIComponent(kpiId));
-    window.open(data.url, '_blank', 'noopener');
+    if (newTab) newTab.location.href = data.url;
+    else window.open(data.url, '_blank', 'noopener');
   } catch (err) {
+    if (newTab) newTab.close();
     showToast('เปิดไฟล์ไม่สำเร็จ: ' + err.message, 'danger');
   }
 }
