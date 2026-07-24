@@ -442,15 +442,26 @@ async function handleUploadClick(kpiId) {
   var input = document.getElementById('fileInput-' + kpiId);
   var file = input.files[0];
   if (!file) { showToast('กรุณาเลือกไฟล์ก่อน', 'warning'); return; }
-  var MAX_SIZE = 15 * 1024 * 1024;
-  if (file.size > MAX_SIZE) { showToast('ไฟล์ใหญ่เกินไป (จำกัด 15MB)', 'danger'); return; }
+  var MAX_SIZE = 50 * 1024 * 1024;
+  if (file.size > MAX_SIZE) { showToast('ไฟล์ใหญ่เกินไป (จำกัด 50MB)', 'danger'); return; }
 
   showLoading(true);
   try {
-    var formData = new FormData();
-    formData.append('kpi_id', kpiId);
-    formData.append('file', file);
-    await apiFetch('/api/evidence/submit', { method: 'POST', body: formData });
+    // อัปโหลดตรงไป Supabase Storage (ไม่ผ่าน Vercel function) — เลี่ยงข้อจำกัดขนาด request
+    const ticket = await apiPost('/api/evidence/upload-ticket', { kpi_id: kpiId, file_name: file.name });
+    const uploadRes = await fetch(ticket.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error('อัปโหลดไฟล์ไปที่พื้นที่จัดเก็บไม่สำเร็จ (HTTP ' + uploadRes.status + ')');
+
+    await apiPost('/api/evidence/confirm-upload', {
+      kpi_id: kpiId,
+      path: ticket.path,
+      file_name: file.name,
+      mime_type: file.type || 'application/octet-stream',
+    });
     showLoading(false);
     showToast('อัปโหลดสำเร็จ: ' + file.name, 'success');
     loadMySubmissions();
