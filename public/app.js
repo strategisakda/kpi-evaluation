@@ -647,10 +647,19 @@ function aiAnalysisResultHtml(result, cachedAt) {
   var cachedNote = cachedAt
     ? '<div class="alert alert-light border small mb-3 py-2"><i class="bi bi-clock-history me-1"></i>ผลตรวจนี้บันทึกไว้จากการตรวจเมื่อ ' + formatDateTimeClient(cachedAt) + ' — ไม่ได้เรียก AI ใหม่ (กด "ตรวจใหม่" หากต้องการวิเคราะห์ซ้ำ)</div>'
     : '';
+  var levelHtml = (result.achievedLevel !== undefined && result.achievedLevel !== null)
+    ? '<div class="mb-2"><strong>ระดับที่เอกสารเข้าข่าย (ประเมินโดย AI):</strong> ' +
+      (result.achievedLevel >= 1
+        ? '<span class="kpi-score kpi-' + scoreChipClass(result.achievedLevel) + '">ระดับ ' + result.achievedLevel + '</span><span class="text-muted small"> / 5</span>'
+        : '<span class="text-muted">ยังไม่เข้าข่ายระดับใด</span>') +
+      (result.levelReasoning ? '<div class="kpi-analysis-hint mt-1">' + escapeHtml(result.levelReasoning) + '</div>' : '') +
+      '</div>'
+    : '';
   return cachedNote +
     '<div class="alert alert-secondary small mb-3"><i class="bi bi-info-circle me-1"></i>ข้อมูลจาก AI เพื่อประกอบการพิจารณาเท่านั้น ไม่ใช่การตัดสินคะแนน — นักวิชาการเป็นผู้ตัดสินใจขั้นสุดท้ายเสมอ</div>' +
     '<div class="mb-2"><strong>ไฟล์:</strong> ' + escapeHtml(result.fileName || '-') + '</div>' +
     '<div class="mb-2"><strong>ความสอดคล้องกับเกณฑ์ตัวชี้วัด:</strong> ' + consistencyBadge + '</div>' +
+    levelHtml +
     '<div class="mb-2"><strong>สรุปเนื้อหา:</strong><p class="mb-0">' + escapeHtml(result.summary || '-') + '</p></div>' +
     '<div class="mb-2"><strong>จุดสังเกต:</strong>' + obsHtml + '</div>' +
     '<div class="mb-0"><strong><i class="bi bi-lightbulb text-warning"></i> ข้อเสนอแนะการพัฒนา/ปรับปรุงสำหรับอำเภอ:</strong>' + recHtml + '</div>';
@@ -677,6 +686,8 @@ function analyzeEvidenceForDistrict(district, kpiId) {
       summary: cached.aiSummary,
       observations: cached.aiObservations,
       recommendations: cached.aiRecommendations,
+      achievedLevel: cached.aiAchievedLevel,
+      levelReasoning: cached.aiLevelReasoning,
       fileName: cached.evidenceFileName
     }, cached.aiCheckedAt);
     document.getElementById('aiAnalysisReanalyzeBtn').classList.remove('d-none');
@@ -706,6 +717,8 @@ async function runAiAnalysis(district, kpiId) {
       reviewRow.aiSummary = result.summary;
       reviewRow.aiObservations = result.observations || [];
       reviewRow.aiRecommendations = result.recommendations || [];
+      reviewRow.aiAchievedLevel = result.achievedLevel;
+      reviewRow.aiLevelReasoning = result.levelReasoning;
       reviewRow.aiCheckedAt = Date.now();
       var reviewBody = document.getElementById('reviewBody');
       if (reviewBody) reviewBody.innerHTML = LAST_REVIEW_ROWS.map(reviewRowHtml).join('');
@@ -716,6 +729,8 @@ async function runAiAnalysis(district, kpiId) {
       submitRow.aiSummary = result.summary;
       submitRow.aiObservations = result.observations || [];
       submitRow.aiRecommendations = result.recommendations || [];
+      submitRow.aiAchievedLevel = result.achievedLevel;
+      submitRow.aiLevelReasoning = result.levelReasoning;
       submitRow.aiCheckedAt = Date.now();
       renderSubmitRows(LAST_MY_SUBMISSION_ROWS);
     }
@@ -1307,10 +1322,19 @@ function showAiInsight(district, kpiId) {
   var recHtml = (r.aiRecommendations && r.aiRecommendations.length)
     ? '<ul class="mb-0">' + r.aiRecommendations.map(function (x) { return '<li>' + escapeHtml(x) + '</li>'; }).join('') + '</ul>'
     : '<span class="text-muted small">ไม่มีข้อเสนอแนะเพิ่มเติม</span>';
+  var levelHtml = (r.aiAchievedLevel !== undefined && r.aiAchievedLevel !== null)
+    ? '<div class="mb-2"><strong>ระดับที่เอกสารเข้าข่าย (ประเมินโดย AI):</strong> ' +
+      (r.aiAchievedLevel >= 1
+        ? '<span class="kpi-score kpi-' + scoreChipClass(r.aiAchievedLevel) + '">ระดับ ' + r.aiAchievedLevel + '</span><span class="text-muted small"> / 5</span>'
+        : '<span class="text-muted">ยังไม่เข้าข่ายระดับใด</span>') +
+      (r.aiLevelReasoning ? '<div class="kpi-analysis-hint mt-1">' + escapeHtml(r.aiLevelReasoning) + '</div>' : '') +
+      '</div>'
+    : '';
   document.getElementById('aiInsightKpiLabel').textContent = r.kpiName;
   document.getElementById('aiInsightBody').innerHTML =
     '<div class="alert alert-secondary small mb-3"><i class="bi bi-info-circle me-1"></i>ข้อมูลจาก AI เพื่อช่วยชี้เป้าการพัฒนาเบื้องต้นเท่านั้น ไม่ใช่ผลการตัดสินคะแนน</div>' +
     '<div class="mb-2"><strong>ความสอดคล้องกับเกณฑ์ตัวชี้วัด:</strong> ' + consistencyBadge + '</div>' +
+    levelHtml +
     '<div class="mb-0"><strong><i class="bi bi-lightbulb text-warning"></i> ข้อเสนอแนะการพัฒนา/ปรับปรุง:</strong>' + recHtml + '</div>' +
     (r.aiCheckedAt ? '<div class="text-muted small mt-2">ตรวจโดย AI เมื่อ ' + formatDateTimeClient(r.aiCheckedAt) + '</div>' : '');
   new bootstrap.Modal(document.getElementById('aiInsightModal')).show();
