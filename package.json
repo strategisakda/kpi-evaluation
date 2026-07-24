@@ -4,7 +4,7 @@
   "private": true,
   "description": "ระบบประเมินผล KPI สำนักงานพัฒนาชุมชนจังหวัดลุ่มน้ำ (Node.js + Vercel + Supabase)",
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "node dev-server.js",
