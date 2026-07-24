@@ -1475,8 +1475,14 @@ async function handleExportPdf() {
     }
     const blob = await res.blob();
     const disposition = res.headers.get('Content-Disposition') || '';
-    const match = /filename="?([^"]+)"?/.exec(disposition);
-    const fileName = match ? match[1] : 'รายงานผลการตรวจคำรับรองฯ.pdf';
+    // ต้องอ่านจาก filename* (UTF-8) ก่อน — filename="..." เฉยๆ เป็นแค่ fallback ภาษาอังกฤษ
+    const starMatch = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+    const plainMatch = /filename="?([^";]+)"?/.exec(disposition);
+    const fileName = starMatch
+      ? decodeURIComponent(starMatch[1])
+      : plainMatch
+      ? plainMatch[1]
+      : 'รายงานผลการตรวจคำรับรองฯ.pdf';
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
