@@ -152,23 +152,20 @@ async function askKpiResponsible() {
   var q = input.value.trim();
   var results = document.getElementById('kpiChatResults');
   if (!q) { return; }
-  results.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-success"></div></div>';
+  var loadingId = 'kpiChatLoading-' + Date.now();
+  results.innerHTML += '<div class="chat-bubble-user mb-2 text-end"><div class="d-inline-block bg-brand text-white rounded-3 px-3 py-2 small" style="background:var(--brand)">' + escapeHtml(q) + '</div></div>' +
+    '<div class="text-start py-2" id="' + loadingId + '"><div class="spinner-border spinner-border-sm text-success"></div> <span class="small text-muted">AI กำลังค้นข้อมูลตัวชี้วัด...</span></div>';
+  input.value = '';
+  var loadingEl = document.getElementById(loadingId);
   try {
-    const data = await apiGet('/api/kpi-responsible?q=' + encodeURIComponent(q));
-    var matches = data.matches;
-    if (!matches || !matches.length) {
-      results.innerHTML = '<div class="chat-bubble-bot">ไม่พบตัวชี้วัดที่ตรงกับ "' + escapeHtml(q) + '" ลองพิมพ์คำอื่นดูครับ</div>';
-      return;
-    }
-    results.innerHTML = matches.map(function (m) {
-      var lines = [];
-      if (m.reviewerName) lines.push('<strong>นักวิชาการผู้ตรวจ:</strong> ' + escapeHtml(m.reviewerName) + (m.reviewerContactEmail ? ' (' + escapeHtml(m.reviewerContactEmail) + ')' : ''));
-      if (m.dataSourceContact) lines.push('<strong>ผู้ประสานงานข้อมูล:</strong> ' + escapeHtml(m.dataSourceContact));
-      if (!lines.length) lines.push('<span class="text-muted">ยังไม่มีข้อมูลผู้รับผิดชอบสำหรับตัวชี้วัดนี้</span>');
-      return '<div class="chat-bubble-bot mb-2"><div class="fw-semibold mb-1">' + escapeHtml(m.kpiName) + '</div>' + lines.join('<br>') + '</div>';
-    }).join('');
+    const data = await apiPost('/api/kpi-chat', { question: q });
+    var kpiTag = (data.relevantKpiIds && data.relevantKpiIds.length)
+      ? '<div class="mt-1">' + data.relevantKpiIds.map(function (id) { return '<span class="badge bg-light text-dark border me-1">' + escapeHtml(id) + '</span>'; }).join('') + '</div>'
+      : '';
+    loadingEl.outerHTML = '<div class="chat-bubble-bot mb-2">' + escapeHtml(data.answer).replace(/\n/g, '<br>') + kpiTag + '</div>';
+    results.scrollTop = results.scrollHeight;
   } catch (err) {
-    results.innerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(err.message) + '</div>';
+    loadingEl.outerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(err.message) + '</div>';
   }
 }
 
