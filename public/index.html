@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <title>KPI Evaluation — สถานะระบบ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 1.3rem; }
+    pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    .ok { color: #16794b; }
+    .bad { color: #b3261e; }
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+    td, th { border: 1px solid #ddd; padding: 6px 10px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>ระบบประเมินผล KPI — หน้าตรวจสอบสถานะ (Phase 1)</h1>
+  <p>หน้านี้ใช้พิสูจน์ว่า Vercel ↔ Supabase เชื่อมกันสำเร็จ ยังไม่ใช่หน้าใช้งานจริง</p>
+
+  <h2>Health check</h2>
+  <pre id="health">กำลังโหลด...</pre>
+
+  <h2>คะแนนรายอำเภอ (ข้อมูลตัวอย่าง)</h2>
+  <table id="scores-table">
+    <thead><tr><th>อำเภอ</th><th>คะแนนรวม</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function load() {
+      try {
+        const h = await fetch('/api/health').then(r => r.json());
+        document.getElementById('health').textContent = JSON.stringify(h, null, 2);
+        document.getElementById('health').className = h.ok ? 'ok' : 'bad';
+      } catch (e) {
+        document.getElementById('health').textContent = 'เรียก /api/health ไม่สำเร็จ: ' + e.message;
+        document.getElementById('health').className = 'bad';
+      }
+
+      try {
+        const s = await fetch('/api/public/scores').then(r => r.json());
+        const tbody = document.querySelector('#scores-table tbody');
+        (s.scores || []).forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.district}</td><td>${row.overallScore}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

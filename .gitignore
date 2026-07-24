@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# env / secrets — ห้าม commit เด็ดขาด
+.env
+.env.local
+.env.*.local
+
+# vercel
+.vercel/
+
+# Claude Code local settings (ไม่ใช่ส่วนของแอป)
+.claude/
+
+# logs / os
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
