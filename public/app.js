@@ -239,22 +239,18 @@ document.addEventListener('DOMContentLoaded', function () {
     var uploadBtn = e.target.closest('[data-action="upload"]');
     var deleteBtn = e.target.closest('[data-action="delete-evidence"]');
     var aiBtn = e.target.closest('[data-action="ai-analyze-mine"]');
-    var viewBtn = e.target.closest('[data-action="view-evidence"]');
     if (uploadBtn) handleUploadClick(uploadBtn.getAttribute('data-kpi-id'));
     if (deleteBtn) handleDeleteEvidenceClick(deleteBtn.getAttribute('data-kpi-id'));
     if (aiBtn) analyzeEvidenceForDistrict(CURRENT_USER.district, aiBtn.getAttribute('data-kpi-id'));
-    if (viewBtn) openEvidence(CURRENT_USER.district, viewBtn.getAttribute('data-kpi-id'));
   });
 
   document.getElementById('tab-review').addEventListener('click', function (e) {
     var calcBtn = e.target.closest('[data-action="calc"]');
     var undoBtn = e.target.closest('[data-action="undo-score"]');
     var aiBtn = e.target.closest('[data-action="ai-analyze"]');
-    var viewBtn = e.target.closest('[data-action="view-evidence"]');
     if (calcBtn) openCalculator(calcBtn.getAttribute('data-district'));
     if (undoBtn) undoScore(undoBtn.getAttribute('data-district'));
     if (aiBtn) analyzeEvidenceForDistrict(aiBtn.getAttribute('data-district'));
-    if (viewBtn) openEvidence(viewBtn.getAttribute('data-district'), currentReviewKpiId);
   });
   document.getElementById('aiAnalysisReanalyzeBtn').addEventListener('click', forceReanalyzeEvidence);
   document.getElementById('kpiChatFab').addEventListener('click', function () {
@@ -388,7 +384,7 @@ function submitRowHtml(r) {
     evidenceHtml = (r.evidenceFileName || r.evidenceLink)
       ? '<div class="evidence-file">' +
         (r.evidenceFileName
-          ? '<button type="button" class="btn btn-link p-0 border-0 align-baseline" data-action="view-evidence" data-kpi-id="' + r.kpiId + '">' + escapeHtml(r.evidenceFileName) + '</button>'
+          ? '<a href="' + escapeAttr(r.evidenceUrl || '#') + '" target="_blank" rel="noopener">' + escapeHtml(r.evidenceFileName) + '</a>'
           : '<a href="' + escapeAttr(r.evidenceLink) + '" target="_blank" rel="noopener">เปิดลิงก์</a>') +
         aiSelfCheckBtn +
         '<button type="button" class="btn btn-sm btn-outline-danger btn-delete-evidence" data-action="delete-evidence" data-kpi-id="' + r.kpiId + '" title="ลบไฟล์นี้"><i class="bi bi-trash"></i></button>' +
@@ -413,20 +409,6 @@ function submitRowHtml(r) {
     '<td>' + noteHtml + '</td>' +
     '<td>' + uploadCellHtml + '</td>' +
     '</tr>';
-}
-
-async function openEvidence(district, kpiId) {
-  // เปิดแท็บเปล่าทันทีตอนคลิก (ก่อน await) กัน popup blocker — เบราว์เซอร์ส่วนใหญ่บล็อก
-  // window.open ที่เกิดขึ้นหลัง await เพราะไม่ถือว่าเป็นผลจากการคลิกโดยตรงแล้ว
-  var newTab = window.open('', '_blank');
-  try {
-    const data = await apiGet('/api/evidence/url?district=' + encodeURIComponent(district) + '&kpi_id=' + encodeURIComponent(kpiId));
-    if (newTab) newTab.location.href = data.url;
-    else window.open(data.url, '_blank', 'noopener');
-  } catch (err) {
-    if (newTab) newTab.close();
-    showToast('เปิดไฟล์ไม่สำเร็จ: ' + err.message, 'danger');
-  }
 }
 
 async function handleDeleteEvidenceClick(kpiId) {
@@ -540,7 +522,7 @@ function reviewRowHtml(r) {
     var aiBtnCls = aiChecked ? 'btn-info' : 'btn-outline-info';
     var aiBtnTitle = aiChecked ? ('ตรวจแล้ว: ' + r.aiConsistency + ' (คลิกดูผลที่บันทึกไว้)') : 'ให้ AI ช่วยดูหลักฐานเบื้องต้น (ไม่ตัดสินคะแนน)';
     evidenceHtml = (r.evidenceFileName
-      ? '<button type="button" class="btn btn-link p-0 border-0 align-baseline" data-action="view-evidence" data-district="' + escapeAttr(r.district) + '">' + escapeHtml(r.evidenceFileName) + '</button>'
+      ? '<a href="' + escapeAttr(r.evidenceUrl || '#') + '" target="_blank" rel="noopener">' + escapeHtml(r.evidenceFileName) + '</a>'
       : '<a href="' + escapeAttr(r.evidenceLink) + '" target="_blank" rel="noopener">เปิดลิงก์</a>') +
       '<button type="button" class="btn btn-sm ' + aiBtnCls + ' py-0 px-1 ms-1" data-action="ai-analyze" data-district="' + r.district + '" title="' + escapeAttr(aiBtnTitle) + '"><i class="bi bi-robot"></i></button>';
   } else if (!currentReviewRequiresEvidence) {
