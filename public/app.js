@@ -270,6 +270,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('userAccountsBody').addEventListener('click', function (e) {
     var btn = e.target.closest('[data-action="regen-password"]');
     if (btn) regeneratePasswordFor(btn.getAttribute('data-username'));
+    var delBtn = e.target.closest('[data-action="delete-user"]');
+    if (delBtn) deleteUserAccount(delBtn.getAttribute('data-username'), delBtn.getAttribute('data-name'));
   });
   document.getElementById('openCreateUserBtn').addEventListener('click', openCreateUserModal);
   document.getElementById('newRole').addEventListener('change', toggleNewUserDistrictField);
@@ -800,7 +802,10 @@ function renderUserAccounts(users) {
       '</div></td>' +
       '<td>' + userRolePillHtml(u) + '</td>' +
       '<td>' + escapeHtml(u.contactEmail || '-') + '</td>' +
-      '<td><button class="btn btn-sm btn-outline-secondary" data-action="regen-password" data-username="' + escapeAttr(u.username) + '">รีเซ็ตรหัสผ่าน</button></td>' +
+      '<td class="text-nowrap">' +
+      '<button class="btn btn-sm btn-outline-secondary me-1" data-action="regen-password" data-username="' + escapeAttr(u.username) + '">รีเซ็ตรหัสผ่าน</button>' +
+      '<button class="btn btn-sm btn-outline-danger" data-action="delete-user" data-username="' + escapeAttr(u.username) + '" data-name="' + escapeAttr(u.displayName || u.username) + '"><i class="bi bi-trash"></i></button>' +
+      '</td>' +
       '</tr>';
   }).join('');
 }
@@ -851,6 +856,20 @@ function regeneratePasswordFor(username) {
   document.getElementById('resetPasswordUsernameLabel').textContent = username;
   document.getElementById('rpNewPassword').value = '';
   new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+}
+
+async function deleteUserAccount(username, displayName) {
+  if (!confirm('ยืนยันการลบบัญชี "' + displayName + '" (' + username + ')?\n\nการลบไม่สามารถย้อนกลับได้ และจะยกเลิกการมอบหมายตรวจ KPI ที่บัญชีนี้รับผิดชอบอยู่')) return;
+  showLoading(true);
+  try {
+    await apiDelete('/api/admin/users/' + encodeURIComponent(username));
+    showLoading(false);
+    showToast('ลบบัญชี "' + displayName + '" เรียบร้อยแล้ว', 'success');
+    loadUserAccounts();
+  } catch (err) {
+    showLoading(false);
+    showToast('เกิดข้อผิดพลาด: ' + err.message, 'danger');
+  }
 }
 
 async function submitResetPassword() {
